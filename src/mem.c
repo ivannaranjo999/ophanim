@@ -2,13 +2,17 @@
 #include <string.h>
 #include "mem.h"
 
+extern const char *proc_path;
+
 int get_mem_info(MemInfo *info){
   char key[KEY_SIZE];
   unsigned long value;
   char unit[UNIT_SIZE];
   unsigned long mem_total, mem_available;
+  char path[KEY_SIZE];
 
-  FILE *fp = fopen("/proc/meminfo","r");
+  snprintf(path, sizeof(path), "%s/meminfo", proc_path);
+  FILE *fp = fopen(path,"r");
   if (!fp) return -1;
 
   mem_total = 0;

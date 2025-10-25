@@ -24,6 +24,7 @@ volatile sig_atomic_t stop = 0;
 char metrics_text[METRIX_SIZE];
 pthread_mutex_t metrics_lock = PTHREAD_MUTEX_INITIALIZER;
 extern int server_fd_global;
+const char *proc_path = NULL;
 
 void handle_sigint(int sig) {
   (void) sig;
@@ -54,7 +55,7 @@ void print_local_ip() {
       inet_ntop(AF_INET, &(sa->sin_addr), ip, INET_ADDRSTRLEN);
       // skip loopback
       if (strcmp(ip, "127.0.0.1") != 0) {
-          printf(" -> You can access SysProbe at http://%s:8080\n", ip);
+          printf(" -> You can access Ophanim at http://%s:8080\n", ip);
       }
     }
   }
@@ -63,7 +64,7 @@ void print_local_ip() {
 }
 
 int main() {
-  double cpu = get_cpu_usage();
+  double cpu;
   MemInfo mem;
   NetStats net;
   time_t now; 
@@ -75,9 +76,15 @@ int main() {
     return 1;
   }
 
+  proc_path = getenv("PROC_PATH");
+
+  if (!proc_path) proc_path = "/proc";
+
+  printf("Using proc path: %s\n", proc_path);
+
   pthread_create(&http_thread, NULL, http_thread_func, NULL);
 
-  printf("SysProbe started. Collecting metrics every %d seconds...\n",
+  printf("Ophanim started. Collecting metrics every %d seconds...\n",
     REFRESH_PERIOD);
 
   print_local_ip();
@@ -85,6 +92,7 @@ int main() {
   while (!stop) {
     get_mem_info(&mem);
     get_net_stats(&net, INTERFACE);
+    cpu = get_cpu_usage();
 
     double mem_used_pct = (double)mem.used_kb / mem.total_kb * 100.0;
 
@@ -105,11 +113,13 @@ int main() {
     pthread_mutex_unlock(&metrics_lock);
 
     sleep(REFRESH_PERIOD);
+    fflush(stdout);
   }
 
-  printf("\nStopping SysProbe...\n");
+  printf("\nStopping Ophanim...\n");
   pthread_join(http_thread, NULL);
   printf("Exited cleanly.\n");
+  fflush(stdout);
   return 0;
 
   return 0;

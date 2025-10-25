@@ -2,13 +2,17 @@
 #include <string.h>
 #include "net.h"
 
+extern const char *proc_path;
+
 int get_net_stats(NetStats *stats, const char *iface) {
   char line[NET_LINE_SIZE];
   char name[NET_NAME_SIZE];
   int found = 0;
   unsigned long long r_bytes, t_bytes;
+  char path[NET_LINE_SIZE];
 
-  FILE *fp = fopen("/proc/net/dev", "r");
+  snprintf(path, sizeof(path), "%s/net/dev", proc_path);
+  FILE *fp = fopen(path, "r");
   if (!fp) return -1;
 
   while (fgets(line, sizeof(line), fp)) {

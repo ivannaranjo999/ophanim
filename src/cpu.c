@@ -4,11 +4,15 @@
 #include <unistd.h>
 #include "cpu.h"
 
+extern const char *proc_path;
+
 static int read_cpu_times(CpuTimes *t) {
   char line[CPU_LINE_SIZE];
+  char path[CPU_LINE_SIZE];
 
   /* Open proc stat file */
-  FILE *fp = fopen("/proc/stat", "r");
+  snprintf(path,sizeof(path), "%s/stat", proc_path);
+  FILE *fp = fopen(path, "r");
   if (!fp) return -1;
 
   /* Read the first line */
