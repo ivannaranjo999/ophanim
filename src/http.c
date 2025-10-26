@@ -90,7 +90,6 @@ int start_http_server(int port) {
       "Connection: close\r\n"
       "Refresh: %d\r\n"
       "\r\n"
-      "Current metrics:\n"
       "%s", UPDATE_RATE, body);
 
     send(new_socket, response, strlen(response),0);

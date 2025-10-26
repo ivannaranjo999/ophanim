@@ -10,7 +10,7 @@ RUN gcc -O2 -Wall -Wextra -static -Iinclude \
     -o ophanim src/main.c src/http.c src/cpu.c src/mem.c src/net.c
 
 # Stage 2: Runtime
-FROM scratch
+FROM alpine:latest
 
 COPY --from=builder /app/ophanim /usr/local/bin/ophanim
 
