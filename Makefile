@@ -1,7 +1,7 @@
 IMAGE_NAME = ophanim
 CONTAINER_NAME = ophanim
 PROC_PATH = /host_proc
-SYS_PATH = /host_sys
+NET_NI = wlo1
 
 all: run
 
@@ -16,9 +16,8 @@ run: stop build
 	@docker run -d --name $(CONTAINER_NAME) \
 		--net=host --pid=host \
 		-v /proc:$(PROC_PATH):ro \
-		-v /sys:$(SYS_PATH):ro \
 		-e PROC_PATH=$(PROC_PATH) \
-		-e SYS_PATH=$(SYS_PATH) \
+		-e NET_NI=$(NET_NI) \
 		$(IMAGE_NAME):latest
 
 logs:

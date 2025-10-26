@@ -19,5 +19,6 @@ EXPOSE 8080
 
 # Env paths
 ENV PROC_PATH=/host_proc
+ENV NET_NI=wlo1
 
 ENTRYPOINT ["/usr/local/bin/ophanim"]
