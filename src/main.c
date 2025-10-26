@@ -106,7 +106,7 @@ int main() {
 
     pthread_mutex_lock(&metrics_lock);
     snprintf(metrics_text, sizeof(metrics_text),
-     "[%s] CPU: %.2f%% | MEM: %.2f%% (%llu/%llu MB) | NET: rx=%llu KB tx=%llu KB\n",
+     "%s\nCPU: %.2f%%\nMEM: %.2f%% (%llu/%llu MB)\nNET: rx=%llu KB tx=%llu KB\n",
      ts,
      cpu,
      mem_used_pct,
