@@ -14,6 +14,7 @@
 #include "mem.h"
 #include "net.h"
 #include "http.h"
+#include "bat.h"
 
 #define REFRESH_PERIOD 5
 #define METRIX_SIZE 1024
@@ -25,6 +26,7 @@ char metrics_text[METRIX_SIZE];
 pthread_mutex_t metrics_lock = PTHREAD_MUTEX_INITIALIZER;
 extern int server_fd_global;
 const char *proc_path = NULL;
+const char *sys_path = NULL;
 const char *net_ni = NULL;
 
 void handle_sigint(int sig) {
@@ -71,6 +73,7 @@ int main() {
   time_t now; 
   char *ts;
   pthread_t http_thread;
+  battery_info_t bat;
 
   if (signal(SIGINT, handle_sigint) == SIG_ERR) {
     perror("signal");
@@ -78,12 +81,15 @@ int main() {
   }
 
   proc_path = getenv("PROC_PATH");
+  sys_path = getenv("SYS_PATH");
   net_ni = getenv("NET_NI");
 
   if (!proc_path) proc_path = "/proc";
+  if (!sys_path) sys_path = "/sys";
   if (!net_ni) net_ni = "wlo1";
 
   printf("Using proc path: %s\n", proc_path);
+  printf("Using sys path: %s\n", sys_path);
   printf("Using network interface: %s\n", net_ni);
 
   pthread_create(&http_thread, NULL, http_thread_func, NULL);
@@ -97,6 +103,7 @@ int main() {
     get_mem_info(&mem);
     get_net_stats(&net, net_ni);
     cpu = get_cpu_usage();
+    bat = read_battery_info(sys_path);
 
     double mem_used_pct = (double)mem.used_kb / mem.total_kb * 100.0;
 
@@ -105,17 +112,30 @@ int main() {
     ts[strcspn(ts, "\n")] = '\0';
 
     pthread_mutex_lock(&metrics_lock);
-    snprintf(metrics_text, sizeof(metrics_text),
-     "%s\nCPU: %.2f%%\nMEM: %.2f%% (%llu/%llu MB)\nNET: rx=%llu KB tx=%llu KB\n",
-     ts,
-     cpu,
-     mem_used_pct,
-     mem.used_kb / 1024,
-     mem.total_kb / 1024,
-     net.rx_bytes / 1024,
-     net.tx_bytes / 1024);
+    if (bat.present){
+      snprintf(metrics_text, sizeof(metrics_text),
+       "%s\nCPU: %.2f%%\nMEM: %.2f%% (%llu/%llu MB)\nNET: rx=%llu KB tx=%llu KB\nBAT: %s, %.2f%%\n",
+       ts,
+       cpu,
+       mem_used_pct,
+       mem.used_kb / 1024,
+       mem.total_kb / 1024,
+       net.rx_bytes / 1024,
+       net.tx_bytes / 1024,
+       bat.status,
+       bat.capacity);
+    } else {
+      snprintf(metrics_text, sizeof(metrics_text),
+       "%s\nCPU: %.2f%%\nMEM: %.2f%% (%llu/%llu MB)\nNET: rx=%llu KB tx=%llu KB\n",
+       ts,
+       cpu,
+       mem_used_pct,
+       mem.used_kb / 1024,
+       mem.total_kb / 1024,
+       net.rx_bytes / 1024,
+       net.tx_bytes / 1024);
+    }
     pthread_mutex_unlock(&metrics_lock);
-
     sleep(REFRESH_PERIOD);
     fflush(stdout);
   }
